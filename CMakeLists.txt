@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(Muoduo_CPP)
 
 #配置编译选项
-set(CMAKE_CXX_FlAGS ${CMAKE_CXX_FlAGS} -g)
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -g)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
