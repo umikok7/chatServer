@@ -4,6 +4,7 @@
 #include <mysql/mysql.h>
 #include <string>
 #include <muduo/base/Logging.h>
+#include <chrono>
 using namespace std;
 
 
@@ -25,9 +26,17 @@ public:
     // 给外部提供一个访问_conn的接口
     MYSQL* getConnection();
 
+
+    //刷新起始的空闲时间
+    void refreshAliveTime();
+    //计算连接存活的总时长
+    long long getAliveTime();
+
 private:
     MYSQL *
         _conn;
+
+    chrono::steady_clock::time_point m_aliveTime;
 };
 
 #endif

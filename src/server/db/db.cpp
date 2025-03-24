@@ -1,10 +1,12 @@
 #include "db.h"
 
+
 // 数据库配置信息
 static string server = "127.0.0.1";
 static string user = "root";
 static string password = "Kumiko@2188";
 static string dbname = "chat";
+
 
 
 // 初始化数据库连接
@@ -65,4 +67,18 @@ MYSQL_RES* MySQL::query(string sql)
 
 MYSQL* MySQL::getConnection(){
     return _conn;
+}
+
+
+//刷新起始的空闲时间
+void MySQL::refreshAliveTime(){
+    m_aliveTime = chrono::steady_clock::now();
+}
+
+
+//计算连接存活的总时长
+long long MySQL::getAliveTime(){
+    chrono::nanoseconds res = chrono::steady_clock::now() - m_aliveTime;
+    chrono::milliseconds millsec = chrono::duration_cast<chrono::milliseconds>(res);
+    return millsec.count();
 }
