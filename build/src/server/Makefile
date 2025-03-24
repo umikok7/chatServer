@@ -202,6 +202,30 @@ db/db.cpp.s:
 	cd /home/umiko/Project/Muduo_CPP/chatServer/build && $(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer.dir/build.make src/server/CMakeFiles/ChatServer.dir/db/db.cpp.s
 .PHONY : db/db.cpp.s
 
+db/dbPool.o: db/dbPool.cpp.o
+.PHONY : db/dbPool.o
+
+# target to build an object file
+db/dbPool.cpp.o:
+	cd /home/umiko/Project/Muduo_CPP/chatServer/build && $(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer.dir/build.make src/server/CMakeFiles/ChatServer.dir/db/dbPool.cpp.o
+.PHONY : db/dbPool.cpp.o
+
+db/dbPool.i: db/dbPool.cpp.i
+.PHONY : db/dbPool.i
+
+# target to preprocess a source file
+db/dbPool.cpp.i:
+	cd /home/umiko/Project/Muduo_CPP/chatServer/build && $(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer.dir/build.make src/server/CMakeFiles/ChatServer.dir/db/dbPool.cpp.i
+.PHONY : db/dbPool.cpp.i
+
+db/dbPool.s: db/dbPool.cpp.s
+.PHONY : db/dbPool.s
+
+# target to generate assembly for a file
+db/dbPool.cpp.s:
+	cd /home/umiko/Project/Muduo_CPP/chatServer/build && $(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer.dir/build.make src/server/CMakeFiles/ChatServer.dir/db/dbPool.cpp.s
+.PHONY : db/dbPool.cpp.s
+
 main.o: main.cpp.o
 .PHONY : main.o
 
@@ -226,29 +250,29 @@ main.cpp.s:
 	cd /home/umiko/Project/Muduo_CPP/chatServer/build && $(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer.dir/build.make src/server/CMakeFiles/ChatServer.dir/main.cpp.s
 .PHONY : main.cpp.s
 
-model/frrendModel.o: model/frrendModel.cpp.o
-.PHONY : model/frrendModel.o
+model/friendModel.o: model/friendModel.cpp.o
+.PHONY : model/friendModel.o
 
 # target to build an object file
-model/frrendModel.cpp.o:
-	cd /home/umiko/Project/Muduo_CPP/chatServer/build && $(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer.dir/build.make src/server/CMakeFiles/ChatServer.dir/model/frrendModel.cpp.o
-.PHONY : model/frrendModel.cpp.o
+model/friendModel.cpp.o:
+	cd /home/umiko/Project/Muduo_CPP/chatServer/build && $(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer.dir/build.make src/server/CMakeFiles/ChatServer.dir/model/friendModel.cpp.o
+.PHONY : model/friendModel.cpp.o
 
-model/frrendModel.i: model/frrendModel.cpp.i
-.PHONY : model/frrendModel.i
+model/friendModel.i: model/friendModel.cpp.i
+.PHONY : model/friendModel.i
 
 # target to preprocess a source file
-model/frrendModel.cpp.i:
-	cd /home/umiko/Project/Muduo_CPP/chatServer/build && $(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer.dir/build.make src/server/CMakeFiles/ChatServer.dir/model/frrendModel.cpp.i
-.PHONY : model/frrendModel.cpp.i
+model/friendModel.cpp.i:
+	cd /home/umiko/Project/Muduo_CPP/chatServer/build && $(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer.dir/build.make src/server/CMakeFiles/ChatServer.dir/model/friendModel.cpp.i
+.PHONY : model/friendModel.cpp.i
 
-model/frrendModel.s: model/frrendModel.cpp.s
-.PHONY : model/frrendModel.s
+model/friendModel.s: model/friendModel.cpp.s
+.PHONY : model/friendModel.s
 
 # target to generate assembly for a file
-model/frrendModel.cpp.s:
-	cd /home/umiko/Project/Muduo_CPP/chatServer/build && $(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer.dir/build.make src/server/CMakeFiles/ChatServer.dir/model/frrendModel.cpp.s
-.PHONY : model/frrendModel.cpp.s
+model/friendModel.cpp.s:
+	cd /home/umiko/Project/Muduo_CPP/chatServer/build && $(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer.dir/build.make src/server/CMakeFiles/ChatServer.dir/model/friendModel.cpp.s
+.PHONY : model/friendModel.cpp.s
 
 model/groupmodel.o: model/groupmodel.cpp.o
 .PHONY : model/groupmodel.o
@@ -364,12 +388,15 @@ help:
 	@echo "... db/db.o"
 	@echo "... db/db.i"
 	@echo "... db/db.s"
+	@echo "... db/dbPool.o"
+	@echo "... db/dbPool.i"
+	@echo "... db/dbPool.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
-	@echo "... model/frrendModel.o"
-	@echo "... model/frrendModel.i"
-	@echo "... model/frrendModel.s"
+	@echo "... model/friendModel.o"
+	@echo "... model/friendModel.i"
+	@echo "... model/friendModel.s"
 	@echo "... model/groupmodel.o"
 	@echo "... model/groupmodel.i"
 	@echo "... model/groupmodel.s"

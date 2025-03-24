@@ -64,15 +64,18 @@ void dbPool::recycleConn(){
 }
 
 
+
 //消费者
 shared_ptr<MySQL> dbPool::getConn(){
     unique_lock<mutex> lock(m_mutex);
+    //条件变量超时等待机制，不会无限的等待，定期唤醒线程
     while(m_connQ.empty()){
         if(cv_status::timeout == m_cond.wait_for(lock, chrono::milliseconds(m_timeout))){
             if(m_connQ.empty()){continue;} //再次进行判断能够避免虚假唤醒
         }
     }
     //只有在任务队列不为空的时候才进行池的连接
+    //此处自定义了共享的智能指针的析构方式
     shared_ptr<MySQL> connPtr(m_connQ.front(), [this](MySQL* conn){
         //此处要对m_connQ进行写操作，共享资源记得加锁
         lock_guard<mutex> lock(m_mutex);

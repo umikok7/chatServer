@@ -195,4 +195,7 @@ src/server/CMakeFiles/ChatServer.dir/model/offlineMessageModel.cpp.o: \
  /usr/include/boost/config/detail/cxx_composite.hpp \
  /usr/include/boost/detail/workaround.hpp \
  /usr/include/boost/config/workaround.hpp \
- /usr/include/boost/core/addressof.hpp
+ /usr/include/boost/core/addressof.hpp /usr/include/c++/14/chrono \
+ /usr/include/c++/14/bits/chrono.h /usr/include/c++/14/ratio \
+ /usr/include/c++/14/cstdint /usr/include/c++/14/limits \
+ /usr/include/c++/14/ctime /usr/include/c++/14/bits/parse_numbers.h

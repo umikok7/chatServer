@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/home/umiko/Project/Muduo_CPP/chatServer/include -I/home/umiko/Project/Muduo_CPP/chatServer/include/server -I/home/umiko/Project/Muduo_CPP/chatServer/include/server/db -I/home/umiko/Project/Muduo_CPP/chatServer/include/server/model -I/home/umiko/Project/Muduo_CPP/chatServer/include/server/redis -I/home/umiko/Project/Muduo_CPP/chatServer/thirdparty
 
-CXX_FLAGS = -std=gnu++11
+CXX_FLAGS = -g -std=gnu++11
 
