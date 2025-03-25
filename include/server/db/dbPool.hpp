@@ -6,6 +6,7 @@
 #include <condition_variable>
 #include <memory>
 #include <queue>
+#include <atomic>
 using namespace std;
 
 //数据库连接池
@@ -16,6 +17,8 @@ public:
     dbPool& operator=(const dbPool& obj) = delete;
     shared_ptr<MySQL> getConn();   //消费者
     ~dbPool();
+    //添加关闭方法
+    void shutdown();
     
 private:
     dbPool();
@@ -37,6 +40,9 @@ private:
     queue<MySQL*> m_connQ;
     mutex m_mutex;
     condition_variable m_cond;  //用于阻塞消费者线程
+
+    //添加一个退出标志
+    atomic<bool> m_shutdown{false};
 
 };
 

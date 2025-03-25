@@ -30,12 +30,13 @@ dbPool::dbPool(){
 
 //生产者
 void dbPool::produceConn(){
-    while (true){
+    while (!m_shutdown){
         unique_lock<mutex> lock(m_mutex);
-        while(m_connQ.size() >= m_minSize){
+        while(m_connQ.size() >= m_minSize && !m_shutdown){
             // 此时连接数充足，等待消费者使用
             m_cond.wait(lock);
         }
+        if(m_shutdown) break;  // 如果被唤醒是因为需要退出，则跳出循环
         addConn();
         m_cond.notify_all();
     }
@@ -45,8 +46,10 @@ void dbPool::produceConn(){
 
 //回收者
 void dbPool::recycleConn(){
-    while(true){
+    while(!m_shutdown){
         this_thread::sleep_for(chrono::milliseconds(500));
+        if(m_shutdown) break;   // 如果被唤醒是因为需要退出，则跳出循环
+
         lock_guard<mutex> lock(m_mutex);
         while(m_connQ.size() > m_minSize){
             //只有数量大于最小的数量的情况下才进行回收
@@ -97,3 +100,9 @@ dbPool::~dbPool(){
         delete conn;
     }
 }
+
+void dbPool::shutdown(){
+    m_shutdown = true;
+    m_cond.notify_all(); //唤醒所有等待的线程
+}
+
