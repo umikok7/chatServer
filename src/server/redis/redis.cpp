@@ -2,7 +2,7 @@
 #include <iostream>
 
 /*
-同步通道发布与订阅，也可以魔改成移步的版本
+同步通道发布与订阅，也可以魔改成异步的版本
 */
 
 Redis::Redis() : _publish_context(nullptr), _subscribe_context(nullptr){
