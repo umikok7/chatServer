@@ -338,3 +338,85 @@ void ChatService::handleRedisSubscribeMessage(int userid, string msg){
 
 }
 
+
+void ChatService::onConn(const TcpConnectionPtr& conn){
+    if(conn->connected()){
+        // 连接建立时记录活跃时间
+        updateConnTime(conn);
+    }else{
+        // 连接断开时清理连接活跃时间记录
+        lock_guard<mutex> lock(_connMutex);
+        _connTimeMap.erase(conn);
+    }
+}
+
+
+// 更新连接活跃时间
+void ChatService::updateConnTime(const TcpConnectionPtr& conn){
+    lock_guard<mutex> lock(_connMutex);
+    _connTimeMap[conn] = Timestamp::now();
+}
+
+
+// 检查非活动连接
+void ChatService::checkIdleConn(){
+    lock_guard<mutex> lock(_connMutex);
+    Timestamp now = Timestamp::now();
+    vector<pair<TcpConnectionPtr, int>> connToClose;  // 存储<连接,用户ID>对
+
+    //先找出所有需要关闭的连接
+    for(auto it = _connTimeMap.begin(); it != _connTimeMap.end(); ){
+        //计算连接空闲时间
+        double idleTime = timeDifference(now, it->second);
+        // 连接超时，执行断开连接的处理
+        if(idleTime > idleSeconds){
+            LOG_INFO << "检测到空闲连接： " << it->first->peerAddress().toIpPort()
+                    << " 空闲时间： " << idleTime << "s";
+            
+            int userid = -1;
+            //查找连接对应用户id
+            for(const auto& userConn : _userConnMap){
+                if(userConn.second == it->first){
+                    userid = userConn.first;
+                    break;
+                }
+            }    
+            //将连接保存到待关闭列表
+            connToClose.push_back({it->first, userid});
+            // 删除活跃时间记录
+            it = _connTimeMap.erase(it);  //正确处理迭代器，不记录的话就没法循环继续了
+        }else{
+            ++it;
+        }    
+    }        
+    // 处理需要关闭的连接
+    for(const auto& item : connToClose){
+        const TcpConnectionPtr& conn = item.first;
+        int userId = item.second;      
+        if(userId != -1){
+            // 处理已登录用户的连接关闭
+            // 取消redis订阅
+            _redis.unsubscribe(userId);
+            // 设置用户为离线状态
+            User user(userId, "", "", "offline");
+            _userModel.updateState(user);
+            // 从用户连接映射表中删除(使用用户ID直接删除)
+            _userConnMap.erase(userId);
+        }
+        
+        // 最后再关闭连接
+        LOG_INFO << "关闭空闲连接： " << conn->peerAddress().toIpPort();
+        
+        // 使用shared_from_this确保在操作期间连接不会被销毁
+        auto guardedConn = conn->shared_from_this();
+        guardedConn->getLoop()->runInLoop([guardedConn](){
+            guardedConn->forceClose();
+        });
+    }
+}
+
+    
+
+
+
+

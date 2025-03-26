@@ -51,6 +51,13 @@ public:
     // 从redis消息队列中获取订阅的消息
     void handleRedisSubscribeMessage(int , string );
 
+
+    //处理连接建立或者断开
+    void onConn(const TcpConnectionPtr& conn);
+    //更新连接的活跃时间
+    void updateConnTime(const TcpConnectionPtr& conn);
+    //检查非活动连接
+    void checkIdleConn();
     
 private:
     //使用单例模式,将构造函数私有化
@@ -71,6 +78,12 @@ private:
 
     // redis操作对象
     Redis _redis;
+
+
+    // 连接的最后活跃时间表
+    unordered_map<TcpConnectionPtr, Timestamp> _connTimeMap;
+    // 连接清理的时间阈值
+    static const int idleSeconds = 60; //60秒
 
 };
 

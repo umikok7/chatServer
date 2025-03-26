@@ -16,6 +16,9 @@ ChatServer::ChatServer(EventLoop* loop,
         _server.setMessageCallback(std::bind(&ChatServer::onMessage, this, placeholders::_1, placeholders::_2, placeholders::_3));
         //设置线程数量
         _server.setThreadNum(4);  //一个主reactor负责连接，剩下的三个reactor为处理读写操作
+
+        //添加定时器，每隔60s检测一次非活跃连接
+        _evLoop->runEvery(60.0, bind(&ChatService::checkIdleConn, ChatService::instance()));
     }
 
 void ChatServer::start(){
@@ -26,6 +29,8 @@ void ChatServer::start(){
 
 //上报连接相关信息的回调函数
 void ChatServer::onConnection(const TcpConnectionPtr& conn){
+    //先处理连接状态的更新
+    ChatService::instance()->onConn(conn);
     //客户端断开连接
     if(!conn->connected()){
         //添加处理用户异常退出的处理方法
@@ -34,11 +39,16 @@ void ChatServer::onConnection(const TcpConnectionPtr& conn){
     }
 }
 
+
 //上报读写事件相关信息的回调函数
 void ChatServer::onMessage(const TcpConnectionPtr &conn, Buffer *buffer, Timestamp time){
     string buf = buffer->retrieveAllAsString();
     //数据的反序列化
     json js = json::parse(buf);
+
+    //更新连接的活跃时间
+    ChatService::instance()->updateConnTime(conn);
+
     //目的是：完全解耦网络模块的代码和业务模块的代码
     //通过js["msgid"]获取一个对应的业务处理器handler
     auto msgHandler = ChatService::instance()->getHandler(js["msgid"].get<int>());
