@@ -56,6 +56,13 @@ void showCurrentUserData();
 bool isMainMenuRunning = false;
 
 
+
+//UDP心跳相关
+int g_udpfd = -1;
+struct sockaddr_in g_serverAddr;
+atomic_bool g_heartbeatRunning{false};
+
+
 // 聊天客户端程序实现，main线程用作发送线程，子线程用作接收线程
 int main(int argc, char **argv)
 {
@@ -84,6 +91,9 @@ int main(int argc, char **argv)
     server.sin_family = AF_INET;
     server.sin_port = htons(port);
     server.sin_addr.s_addr = inet_addr(ip);
+
+    //保存服务器地址用于心跳
+    g_serverAddr = server;
 
     // client和server进行连接
     if (-1 == connect(clientfd, (sockaddr *)&server, sizeof(sockaddr_in)))
@@ -203,6 +213,46 @@ int main(int argc, char **argv)
 }
 
 
+// 心跳线程函数
+void heartbeatThread(int userid){
+    // 创建udp socket
+    g_udpfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if(g_udpfd < 0){
+        cerr << "Create UDP socket failed!" << endl;
+        return;
+    }
+    g_heartbeatRunning = true;
+    while(g_isLoginSuccess && g_heartbeatRunning){
+        // 构造心跳消息
+        json js;
+        js["msgid"] = HEARTBEAT_MSG;
+        js["id"] = userid;
+
+        string buf = js.dump();
+        //发送udp心跳
+        int ret = sendto(g_udpfd, buf.c_str(), buf.length(), 0, 
+                (struct sockaddr*)&g_serverAddr, sizeof(g_serverAddr));
+        this_thread::sleep_for(chrono::seconds(1));
+        // 添加发送失败处理
+        if(ret < 0) {
+            cerr << "发送心跳包失败: " << strerror(errno) << endl;
+            // 可能的网络问题，短暂暂停后重试
+            this_thread::sleep_for(chrono::milliseconds(100));
+            continue;
+        }
+        
+        // 每5秒输出一次心跳状态（避免过多日志）
+        static int heartbeat_count = 0;
+        if(++heartbeat_count % 5 == 0) {
+            cout << "已发送心跳 " << heartbeat_count << " 次" << endl;
+        }
+    }
+    close(g_udpfd);
+    g_udpfd = -1;
+}
+
+
+
 void doLoginResponse(json &responsejs){
     if (0 != responsejs["errno"].get<int>()) // 登录失败
     {
@@ -287,6 +337,14 @@ void doLoginResponse(json &responsejs){
                 }
             }
         }
+
+        // 修改UDP心跳地址配置 
+        g_serverAddr.sin_port = htons(8001); //使用Nginx的UDP转发端口
+        // 启动心跳线程
+        g_heartbeatRunning = false;  //确保之前心跳线程退出
+        std::thread hbThread(heartbeatThread, g_currentUser.getId());
+        hbThread.detach();
+
 
         g_isLoginSuccess = true;
     }
@@ -576,6 +634,8 @@ void loginout(int clientfd, string str){
         cerr << "send loginout msg error -> " << buffer << endl;
     }
     else{
+        //停止心跳线程
+        g_heartbeatRunning = false;
         isMainMenuRunning = false;
     }
 }

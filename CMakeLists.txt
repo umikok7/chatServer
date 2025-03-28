@@ -16,6 +16,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include/server)
 include_directories(${PROJECT_SOURCE_DIR}/include/server/db)
 include_directories(${PROJECT_SOURCE_DIR}/include/server/model)
 include_directories(${PROJECT_SOURCE_DIR}/include/server/redis)
+include_directories(${PROJECT_SOURCE_DIR}/include/server/UDP)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty)
 
 # 添加 muduo 库的头文件搜索路径

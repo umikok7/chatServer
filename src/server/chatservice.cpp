@@ -384,6 +384,7 @@ void ChatService::checkIdleConn(){
             //将连接保存到待关闭列表
             connToClose.push_back({it->first, userid});
             // 删除活跃时间记录
+            // 当元素需要删除时，erase返回的迭代器已经指向下一个元素，不需要再递增
             it = _connTimeMap.erase(it);  //正确处理迭代器，不记录的话就没法循环继续了
         }else{
             ++it;
@@ -416,7 +417,101 @@ void ChatService::checkIdleConn(){
 }
 
     
+//UDP心跳初始化
+void ChatService::initHeartBeat(EventLoop* evLoop, const InetAddress& listenAddr){
+    //创建UDP socket
+    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if(sockfd < 0){
+        LOG_FATAL << " UDP socket create error";
+        return;
+    }
+
+    _udpSocket.reset(new udpSocket(sockfd));
+    _udpSocket->setReuseAddr(true);
+    _udpSocket->setReusePort(true);
+    _udpSocket->bindAddress(listenAddr);
+
+    //创建Channel
+    _udpChannel.reset(new Channel(evLoop, _udpSocket->fd()));
+    _udpChannel->setReadCallback(std::bind(&ChatService::handleHeartbeatMsg, this, placeholders::_1));
+    _udpChannel->enableReading();
+
+    //启动心跳定时器，每秒执行一次
+    evLoop->runEvery(1.0, std::bind(&ChatService::heartbeatTimerTask, this));
+}
+
+
+//处理心跳消息
+void ChatService::handleHeartbeatMsg(Timestamp timestamp){
+    struct sockaddr_in clientAddr;
+    char buf[128] = {0};
+    //接收udp心跳包
+    ssize_t n = _udpSocket->recvFrom(buf, sizeof(buf), &clientAddr);
+    if(n > 0){
+        try{
+            //解析心跳信息
+            json js = json::parse(buf);
+            if(js.contains("msgid") && js["msgid"].get<int>() == HEARTBEAT_MSG && js.contains("id")){
+                int userid = js["id"].get<int>();
+                // 验证userid合法性
+                if (userid <= 0 || userid > 100000000) {  // 设置一个合理的上限
+                    LOG_ERROR << "Invalid user ID in heartbeat: " << userid;
+                    return;
+                }
+                //更新心跳计数
+                lock_guard<mutex> lock(_heartbeatMutex);
+                _heartbeatMap[userid] = -1;  // 收到心跳立即重置为-1
+                LOG_DEBUG << "Received heartbeat from user " << userid 
+                        << ", count reset to -1";
+            }
+        }
+        catch(const std::exception& e){
+            LOG_ERROR << "Invalid heartbeat message: " << e.what();
+        }
+    }
+}
 
 
 
+void ChatService::heartbeatTimerTask(){
+    // // 添加心跳状态总览日志
+    // LOG_INFO << "执行心跳状态检查, 当前在线用户: " << _userConnMap.size() << " 人";
+    
+    lock_guard<mutex> lock(_heartbeatMutex);
+    lock_guard<mutex> connlock(_connMutex);
+    //遍历所有的已登录用户
+    for(auto it = _userConnMap.begin(); it != _userConnMap.end(); ){
+        int userid = it->first;
+        //初始化心跳计数
+        if(_heartbeatMap.find(userid) == _heartbeatMap.end()){
+            _heartbeatMap[userid] = 0;
+        }
+        //否则每隔一秒钟心跳计数加一
+        _heartbeatMap[userid]++;
+        //判断是否断开
+        if(_heartbeatMap[userid] > MAX_HEARTBEAT){
+            LOG_INFO << "User " << userid << " heartbeat timeout, disconnecting...";
+            TcpConnectionPtr conn = it->second;
+            //取消redis订阅
+            _redis.unsubscribe(userid);
+            //设置用户为离线状态
+            User user(userid, "", "", "offline");
+            _userModel.updateState(user);
+            //从映射表中进行删除
+            auto tempIt = it;  // 先保存当前迭代器，再递增，然后删除原迭代器指向的元素
+            ++it;
+            _userConnMap.erase(tempIt);
+            _heartbeatMap.erase(userid);
+            //关闭tcp连接
+            if(conn){
+                conn->getLoop()->queueInLoop([conn](){
+                    conn->shutdown();
+                });
+            }
+        }
+        else{
+            it++;
+        }
+    }
+}
 

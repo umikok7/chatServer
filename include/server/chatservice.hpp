@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <functional>
 #include <muduo/net/TcpConnection.h>
+#include <muduo/net/Channel.h>
 #include "json.hpp"
 #include "userModel.hpp"
 #include "offlineMessageModel.hpp"
@@ -11,6 +12,8 @@
 #include "groupmodel.hpp"
 #include "redis.hpp"
 #include <mutex>
+#include <atomic>
+#include "udpSocket.hpp"
 using namespace std;
 using namespace muduo;
 using namespace muduo::net;
@@ -58,6 +61,14 @@ public:
     void updateConnTime(const TcpConnectionPtr& conn);
     //检查非活动连接
     void checkIdleConn();
+
+
+    //UDP心跳监听初始化
+    void initHeartBeat(EventLoop* evLoop, const InetAddress& listenAddr);
+    //处理UDP心跳消息
+    void handleHeartbeatMsg(Timestamp timestamp);
+    //心跳定时任务
+    void heartbeatTimerTask();
     
 private:
     //使用单例模式,将构造函数私有化
@@ -79,11 +90,22 @@ private:
     // redis操作对象
     Redis _redis;
 
-
     // 连接的最后活跃时间表
     unordered_map<TcpConnectionPtr, Timestamp> _connTimeMap;
     // 连接清理的时间阈值
-    static const int idleSeconds = 60; //60秒
+    static const int idleSeconds = 60 * 30; //60秒
+
+    //存放用户id和心跳计数
+    unordered_map<int, int> _heartbeatMap;
+    mutex _heartbeatMutex;  //保护心跳计数器的互斥锁
+
+    //UDP相关
+    unique_ptr<udpSocket> _udpSocket;
+    unique_ptr<Channel> _udpChannel;
+    Buffer _udpRecv;
+
+    const int MAX_HEARTBEAT = 10;  //最大心跳计数不能超过10
+    atomic_bool _running{false};  //控制心跳线程
 
 };
 

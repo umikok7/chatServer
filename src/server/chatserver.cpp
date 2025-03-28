@@ -2,6 +2,7 @@
 #include "json.hpp"
 #include "chatservice.hpp"
 #include <functional>
+#include <muduo/base/Logging.h>
 using json = nlohmann::json;
 
 
@@ -19,6 +20,13 @@ ChatServer::ChatServer(EventLoop* loop,
 
         //添加定时器，每隔60s检测一次非活跃连接
         _evLoop->runEvery(60.0, bind(&ChatService::checkIdleConn, ChatService::instance()));
+
+        //初始化心跳服务 使用TCP端口+1作为udp协议端口
+        uint16_t tcpPort = listenAddr.port();  //nginx配置是6000或6002
+        uint16_t udpPort = tcpPort + 1;   //变为6001 或 6003
+        InetAddress udpAddr(listenAddr.toIp(), udpPort);
+        LOG_INFO << "服务器启动配置 - TCP端口: " << tcpPort << ", UDP心跳端口: " << udpPort;
+        ChatService::instance()->initHeartBeat(loop, udpAddr);
     }
 
 void ChatServer::start(){
