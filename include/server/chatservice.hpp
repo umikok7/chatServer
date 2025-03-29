@@ -102,10 +102,7 @@ private:
     //UDP相关
     unique_ptr<udpSocket> _udpSocket;
     unique_ptr<Channel> _udpChannel;
-    Buffer _udpRecv;
-
     const int MAX_HEARTBEAT = 10;  //最大心跳计数不能超过10
-    atomic_bool _running{false};  //控制心跳线程
 
 };
 

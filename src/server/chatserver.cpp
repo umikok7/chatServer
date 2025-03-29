@@ -23,7 +23,7 @@ ChatServer::ChatServer(EventLoop* loop,
 
         //初始化心跳服务 使用TCP端口+1作为udp协议端口
         uint16_t tcpPort = listenAddr.port();  //nginx配置是6000或6002
-        uint16_t udpPort = tcpPort + 1;   //变为6001 或 6003
+        uint16_t udpPort = tcpPort + 1;   //心跳服务器选用6001 或 6003
         InetAddress udpAddr(listenAddr.toIp(), udpPort);
         LOG_INFO << "服务器启动配置 - TCP端口: " << tcpPort << ", UDP心跳端口: " << udpPort;
         ChatService::instance()->initHeartBeat(loop, udpAddr);

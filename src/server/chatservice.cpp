@@ -420,7 +420,7 @@ void ChatService::checkIdleConn(){
 //UDP心跳初始化
 void ChatService::initHeartBeat(EventLoop* evLoop, const InetAddress& listenAddr){
     //创建UDP socket
-    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);  //第一个参数表示使用IPV4，第二个参数UDP服务用dgram，参数三协议，填入0即可
     if(sockfd < 0){
         LOG_FATAL << " UDP socket create error";
         return;
@@ -442,6 +442,7 @@ void ChatService::initHeartBeat(EventLoop* evLoop, const InetAddress& listenAddr
 
 
 //处理心跳消息
+//timestamp未使用但保留以匹配Channel回调签名
 void ChatService::handleHeartbeatMsg(Timestamp timestamp){
     struct sockaddr_in clientAddr;
     char buf[128] = {0};
@@ -498,9 +499,6 @@ void ChatService::heartbeatTimerTask(){
             User user(userid, "", "", "offline");
             _userModel.updateState(user);
             //从映射表中进行删除
-            auto tempIt = it;  // 先保存当前迭代器，再递增，然后删除原迭代器指向的元素
-            ++it;
-            _userConnMap.erase(tempIt);
             _heartbeatMap.erase(userid);
             //关闭tcp连接
             if(conn){
@@ -508,6 +506,7 @@ void ChatService::heartbeatTimerTask(){
                     conn->shutdown();
                 });
             }
+            it = _userConnMap.erase(it);  //正确处理迭代器确保循环能够继续执行
         }
         else{
             it++;

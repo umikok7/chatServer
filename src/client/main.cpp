@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 {
     if (argc < 3)
     {
-        cerr << "command invalid! example: ./ChatClient 127.0.0.1 6000" << endl;
+        cerr << "command invalid! example: ./ChatClient 127.0.0.1 8000" << endl;
         exit(-1);
     }
 
@@ -232,6 +232,7 @@ void heartbeatThread(int userid){
         //发送udp心跳
         int ret = sendto(g_udpfd, buf.c_str(), buf.length(), 0, 
                 (struct sockaddr*)&g_serverAddr, sizeof(g_serverAddr));
+        //保持每秒钟发送一次
         this_thread::sleep_for(chrono::seconds(1));
         // 添加发送失败处理
         if(ret < 0) {
